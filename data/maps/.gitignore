@@ -1,0 +1,4 @@
+# This git ignore is to ensure the data/maps folder is in the repo, but not actually pushing up the sf data which is too big
+
+*
+!.gitignore
