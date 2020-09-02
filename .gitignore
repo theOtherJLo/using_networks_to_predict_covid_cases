@@ -6,3 +6,4 @@
 # Ignore gif and image outputs
 *.png
 *.gif
+*.rds
