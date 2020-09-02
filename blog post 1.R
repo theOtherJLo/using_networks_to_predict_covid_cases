@@ -33,7 +33,7 @@ msoa <- readr::read_csv('https://c19downloads.azureedge.net/downloads/msoa_data/
   # Turn week to numeric
   mutate(week = as.integer(week)) %>% 
   # Turn NAs into 0s
-  mutate(across(c(last_7_days, cases), .fns = ~ifelse(is.na(.), 0, .)))
+  mutate(across(c(latest_7_days, cases), .fns = ~ifelse(is.na(.), 0, .)))
 
 # Which LA has had the most cases in a week? ----
 la <- msoa %>% 
