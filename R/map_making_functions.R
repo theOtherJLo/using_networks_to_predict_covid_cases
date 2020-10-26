@@ -10,7 +10,7 @@ plot_map_network_feature <- function(msoa_network, msoa_sf, feature, lad = "Leic
   network <- msoa_network %>% 
     activate("nodes") %>% 
     mutate(network_feature = get(feature)) %>% 
-    filter(lad19_nm == "Leicester")
+    filter(lad19_nm == lad)
   
   sf <- msoa_sf %>% 
     inner_join(network %>% as_tibble(), 

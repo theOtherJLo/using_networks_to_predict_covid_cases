@@ -25,7 +25,8 @@ library(ggraph) # for plotting networks
 msoa_sf <- sf::st_read("data/maps/Middle_Layer_Super_Output_Areas__December_2011__Boundaries_EW_BFE.shp")
 
 # Load msoa case data
-# Note we have had to change the URL from the first blog post as it is now saved in a new location
+# Note we have had to change the URL from the first blog post as it is now saved in a new location.
+# I have saved the raw data into the data folder so this analysis can be reproduced exactly. 
 url <- 'https://coronavirus.data.gov.uk/downloads/msoa_data/MSOAs_latest.csv'
 msoa <- readr::read_csv(url, col_types = readr::cols()) %>%
   select(msoa11_cd, starts_with("wk_")) %>%
@@ -288,13 +289,45 @@ rmse <- baseline.pred.obs %>%
 # Visualising model outputs on a map
 # We can use our previous function to do this
 results_network <- msoa_network %>% 
-  left_join(eval_df %>% filter(week == 40) %>% select(name, `model pred` = pred, `actual cases` = cases_next_week))
+  left_join(eval_df %>% filter(week == 40) %>% select(name, `predicted cases` = pred, `actual cases` = cases_next_week))
 
 plot_map_network_feature(results_network, 
                          msoa_sf, feature = "model pred", lad = "Leicester", save = TRUE, combine = TRUE)
 
 plot_map_network_feature(results_network, 
                          msoa_sf, feature = "actual cases", lad = "Leicester", save = TRUE, combine = TRUE)
+
+# i want to do a custom plot here, which shows the actual and predicted cases side by side with the same scale. 
+# This is the code for that:
+
+# We find the max value so we can scale both our graphs equally 
+max_scale <- results_network %>% 
+  as_tibble() %>%  
+  filter(lad19_nm == "Leicester") %>% 
+  select(`predicted cases`, `actual cases`) %>% 
+  max(na.rm = T) %>% 
+  round(-1)
+
+lapply(list("predicted cases", "actual cases"), function(feature){
+  network <- results_network %>% 
+    activate("nodes") %>% 
+    mutate(network_feature = get(feature)) %>% 
+    filter(lad19_nm == "Leicester")
+  
+  sf <- msoa_sf %>% 
+    inner_join(network %>% as_tibble(), 
+               by = c("MSOA11CD" = "name"))
+  
+  sf_plot <- ggplot(sf, aes(fill = network_feature)) +
+    geom_sf() + 
+    theme_void() +
+    scale_fill_viridis_c(limits = c(0, max_scale)) +
+    ggtitle(glue::glue("MSOA map for Leicester with fill based on '{feature}'")) +
+    guides(fill=guide_legend(title="Cases", reverse = TRUE))
+  
+  # Save 
+  ggsave(sf_plot, file = glue("outputs/network features/special sf plot of {feature} for Leicester.png"))
+})
 
 # Things to try out ----
 # There are lots of changes you can try to this process. Some ideas are below:
